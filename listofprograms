@@ -1,0 +1,20 @@
+1)Implement
+ a)Caeser cipher
+ b)Vigenere cipher
+ c)Hill cipher
+ d)Playfair cipher
+ 
+2)Implement Fiesel structure cipher
+
+3)Implement DES & show avalanche & bit independence effect
+
+4)Implement RC4
+
+5)Implement
+ a)LCG PRNG
+ b)BBS PRNG
+ c)ANSI X9.117 PRNG
+ 
+6)Implement RSA
+
+7)Implement AES
