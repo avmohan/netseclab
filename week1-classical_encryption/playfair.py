@@ -5,6 +5,7 @@ import frequencygraph
 letters_noj = 'ABCDEFGHIKLMNOPQRSTUVWXYZ'
 
 def cleanup(text):
+    """Remove unwanted characters, replace J with I & capitalize"""
     text = text.upper()
     clean_text = []
     for c in text:
@@ -15,6 +16,7 @@ def cleanup(text):
     return ''.join(clean_text)
 
 def make_table(key):
+    """Make playfair table from the key"""
     key = list(OrderedDict.fromkeys(cleanup(key)))
     letters_rem = [ c for c in letters_noj if c not in key]
     l = key+letters_rem
@@ -23,12 +25,14 @@ def make_table(key):
     return table
 
 def get_position(char, table):
+    """Returns the position of char in the table"""
     for row in xrange(5):
         for column in xrange(5):
             if table[row][column]==char:
                 return [row, column]
 
 def encrypt_digram(digram, table):
+    """Return digram encrypted using table"""
     assert digram[0]!=digram[1]
     apos = get_position(digram[0], table)
     bpos = get_position(digram[1], table)
@@ -45,6 +49,7 @@ def encrypt_digram(digram, table):
     return table[apos[0]][apos[1]]+table[bpos[0]][bpos[1]]
 
 def decrypt_digram(digram, table):
+    """Return digram decrypted using table"""
     assert digram[0]!=digram[1]
     apos = get_position(digram[0], table)
     bpos = get_position(digram[1], table)
@@ -61,6 +66,7 @@ def decrypt_digram(digram, table):
     return table[apos[0]][apos[1]]+table[bpos[0]][bpos[1]]
 
 def get_digrams(text):
+    """Splits plaintext into digrams"""
     text = cleanup(text)
     clean_text=[]
     l2 = False #True if char is the second char in digram
@@ -91,7 +97,7 @@ def decrypt(ciphertext, key):
     table = make_table(key)
     digrams= [ciphertext[i:i+2] for i in xrange(0, len(ciphertext), 2)]
     digrams_decrypted = [decrypt_digram(digram, table) for digram in digrams]
-    return ''.join(digrams_decrypted)
+    return (''.join(digrams_decrypted)).lower()
 
 def main():
     mode, key, inputfile, outputfile = sys.argv[1:5]
