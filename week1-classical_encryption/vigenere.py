@@ -5,7 +5,7 @@ import frequencygraph
 letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 def encrypt(plaintext, key):
-    print 'encrypt'
+    key = ''.join([c for c in key.upper() if c in letters])
     ciphertext = []
     inx = 0
     for character in plaintext.upper():
@@ -17,7 +17,7 @@ def encrypt(plaintext, key):
     return ''.join(ciphertext)
 
 def decrypt(ciphertext, key):
-    print 'decrypt'
+    key = ''.join([c for c in key.upper() if c in letters])
     plaintext = []
     inx = 0
     for character in ciphertext.upper():
@@ -30,7 +30,7 @@ def decrypt(ciphertext, key):
 
 def main():
     mode, key, inputfile, outputfile = sys.argv[1:5]
-    key = key.upper()
+    key = ''.join([c for c in key.upper() if c in letters])
     ifile = open(inputfile, 'r')
     ofile = open(outputfile, 'w')
     if mode=='e':

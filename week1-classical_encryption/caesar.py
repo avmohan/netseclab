@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Caeser cipher"""
+"""Caesar cipher"""
 import sys
 import frequencygraph
 letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -31,7 +31,7 @@ def main():
         plaintext = ifile.read()
         ciphertext = encrypt(plaintext, key) 
         ofile.write(ciphertext)
-        frequencygraph.freqbars_percentage('Caeser Cipher frequency graph (key={0})'.format(key), plaintext, ciphertext)
+        frequencygraph.freqbars_percentage('Caesar Cipher frequency graph (key={0})'.format(key), plaintext, ciphertext)
     elif mode=='d':
         ciphertext = ifile.read()
         plaintext = decrypt(ciphertext, key)
