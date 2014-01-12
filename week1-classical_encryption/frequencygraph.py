@@ -4,7 +4,7 @@ import sys
 import os
 import pygal
 from collections import Counter
-from pygal.style import LightStyle
+from pygal.style import RedBlueStyle
 import caesar
 import vigenere
 import playfair
@@ -40,7 +40,7 @@ def freqbars(graphtitle, plaintext, ciphertext):
     ciphertext = ciphertext.upper()
     freq_plain = Counter(plaintext)
     freq_cipher = Counter(ciphertext)
-    bar_chart = pygal.Bar(config=CustomConfig(), style=LightStyle)
+    bar_chart = pygal.Bar(config=CustomConfig(), style=RedBlueStyle)
     bar_chart.title = graphtitle[:-1] + ', total no of letters =' + str(sum((freq_plain[c] for c in letters))) + ')'
     bar_chart.x_labels = list(letters)
     bar_chart.add('Plaintext', [ freq_plain[c] for c in letters ])
@@ -56,7 +56,7 @@ def freqbars_percentage(graphtitle, plaintext, ciphertext):
     total_letters = float(sum((freq_plain[c] for c in letters)))
     values_plain = [ freq_plain[c] * 100 / total_letters for c in letters ]
     values_cipher = [ freq_cipher[c] * 100 / total_letters for c in letters ]
-    bar_chart = pygal.Bar(config=CustomConfig(), style=LightStyle, y_title='Percentage frequency')
+    bar_chart = pygal.Bar(config=CustomConfig(), style=RedBlueStyle, y_title='Percentage frequency')
     bar_chart.title = graphtitle
     bar_chart.x_labels = list(letters)
     bar_chart.add('Plaintext', values_plain)
@@ -104,7 +104,7 @@ def main():
     freq_playfair = [i/float(e_count) for i in freq_playfair]
 
     #Plotting linegraphs
-    line_chart = pygal.Line(config=CustomConfig2, style=LightStyle, y_title='Relative frequency')
+    line_chart = pygal.Line(config=CustomConfig2, style=RedBlueStyle, y_title='Relative frequency')
     line_chart.title = 'Relative frequency for various ciphers'
     line_chart.add('Plaintext', freq_plain)
     line_chart.add('Caesar', freq_caesar)
