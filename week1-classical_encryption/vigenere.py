@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Vigenere cipher"""
+"""Vigenere cipher
+by Abhijith V Mohan"""
 import sys
 import frequencygraph
 letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'

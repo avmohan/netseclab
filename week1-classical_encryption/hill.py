@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""Hill cipher
+by Abhijith V Mohan"""
 import sys
 import frequencygraph
 from numpy import linalg

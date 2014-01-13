@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Caesar cipher"""
+"""Caesar cipher
+by Abhijith V Mohan"""
 import sys
 import frequencygraph
 letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'

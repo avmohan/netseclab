@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-"""Frequency graph generator"""
+"""Frequency analysis functions
+by Abhijith V Mohan"""
 import sys
 import os
 import pygal
@@ -112,7 +113,6 @@ def main():
     line_chart.add('Hill', freq_hill)
     line_chart.add('Playfair', freq_playfair)
     line_chart.render_in_browser()
-
     print Counter(plaintext)
 
 if __name__ == '__main__':

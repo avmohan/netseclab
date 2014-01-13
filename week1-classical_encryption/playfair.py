@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+"""Playfair cipher
+by Abhijith V Mohan"""
 from collections import OrderedDict
 import sys
 import frequencygraph
