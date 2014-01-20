@@ -89,19 +89,21 @@ int main(int argc, char *argv[])
 	int cnt;
 	switch(mode) {
 		case 'e':
-			while((cnt = fread(&buf1, 1, 4, fin))==4) {
+			buf1=buf2=0;
+			while((cnt = fread(&buf1, 1, 4, fin))>0) {
 				buf2  = encrypt(buf1);
 				fwrite(&buf2, 4, 1, fout);
+				buf1=buf2=0;
 			}
-			//handle padding
 			break;
 
 		case 'd':
-			while((cnt = fread(&buf1, 1, 4, fin))==4) {	
+			buf1=buf2=0;
+			while((cnt = fread(&buf1, 1, 4, fin))>0) {	
 				buf2 = decrypt(buf1);
 				fwrite(&buf2, 4, 1, fout);
+				buf1=buf2=0;
 			}
-			//handle padding
 			break;
 
 		default: 

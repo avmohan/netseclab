@@ -55,9 +55,11 @@ def freqbars_percentage(graphtitle, plaintext, ciphertext):
     freq_plain = Counter(plaintext)
     freq_cipher = Counter(ciphertext)
     total_letters = float(sum((freq_plain[c] for c in letters)))
-    values_plain = [ freq_plain[c] * 100 / total_letters for c in letters ]
-    values_cipher = [ freq_cipher[c] * 100 / total_letters for c in letters ]
-    bar_chart = pygal.Bar(config=CustomConfig(), style=RedBlueStyle, y_title='Percentage frequency')
+    max_plain = float(max([freq_plain[c] for c in letters]))
+    max_cipher = float(max([freq_cipher[c] for c in letters]))
+    values_plain = [freq_plain[c] * 100 / max_plain for c in letters ]
+    values_cipher = [ freq_cipher[c] * 100 / max_cipher for c in letters ]
+    bar_chart = pygal.Bar(config=CustomConfig(), style=RedBlueStyle, y_title='Percentage relative frequency')
     bar_chart.title = graphtitle
     bar_chart.x_labels = list(letters)
     bar_chart.add('Plaintext', values_plain)
