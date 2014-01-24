@@ -1,5 +1,6 @@
+CFLAGS = -Wall
 des: des.c
-	gcc des.c -o des
+	gcc $(CFLAGS) des.c -o des
 
 clean:
-	rm -f cipher lala *.out
+	rm -f des cipher lala *.out

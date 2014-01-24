@@ -1,10 +1,15 @@
 /*
 DES Algorithm
-by Abhijith V Mohan
+Author: Abhijith V Mohan
 */
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
+#include <time.h>
+#include <stdlib.h>
+
+void printbin(const bool[], int);
 
 //TABLES
 //Initial Permutation
@@ -152,46 +157,243 @@ const int Sbox[8][4][16] =
 				};
 
 /*
+Generate the permutation of input[] in output[] according to table[]
+*/
+void permute_bits(const bool input[], int input_size, bool output[], int output_size, const int table[]) 
+{
+	int i;
+	for(i = 0; i < output_size; i++)
+	{
+		output[i] = input[table[i]];
+	}
+}
+
+/*sbox lookup
+Map 6 bit input to 4 bit output according to the Sbox: Sbox_num
+*/
+void sbox_lookup(const bool input[6], bool output[4], int Sbox_num)
+{
+	//1st and 6th bit gives the row
+	int row = (int)input[0]<<1 | (int)input[5]; 
+	//middle 4 bits give  the column
+	int column = (int)input[1]<<3 | (int)input[2]<<2 | (int)input[3]<<1 | (int)input[4];
+	int val = Sbox[Sbox_num][row][column];
+	output[0] = (bool)(val>>3 & 1);
+	output[1] = (bool)(val>>2 & 1);
+	output[2] = (bool)(val>>1 & 1);
+	output[3] = (bool)(val & 1);
+}
+
+/*
+Apply all 8 S-boxes to transform 48 bits input to 32 bits output
+*/
+void sbox_transform(const bool input[48], bool output[32])
+{
+	int i;
+	for(i = 0; i < 8; i++)
+	{
+		sbox_lookup(&input[6*i], &output[4*i], i);
+	}
+}
+
+/*v3 = v1 XOR v2*/
+void xor(const bool v1[], const bool v2[], bool v3[], int vsize) 
+{
+	int i;
+	for(i = 0 ; i < vsize; i++)
+	{
+		v3[i] = v1[i] ^ v2[i];
+	}
+}
+
+void left_rotate(bool v[], int vsize, int n) 
+{
+	//left rotate v by n bits
+	int i, j;
+	for(j = 0; j < n; j++)
+	{
+		bool temp = v[0];
+		for(i = 0; i < vsize-1; i++)
+		{
+			v[i] = v[i+1];
+		}
+		v[vsize-1] = temp;
+	}
+}
+
+void key_rotate(bool v[], int n)
+{
+	//v is 56 bits, The left & right 28 bits are independently rotated by n bits
+	//rotate left half(28bits) by n bits
+	left_rotate(v, 28, n);
+	//rotate right half(28 bits) by n bits
+	left_rotate(&v[28], 28, n);
+}
+
+/*
 KEY GENERATION
 64 bit key input to the algorithm. every 8th bit is ignored to make 56 bit
 Apply permutation PC1.
-Treat 56 bits as 2 blocks of 28 bits C0 & D0.
+Treat 56 bits as 2 blocks of 28 bits C & D.
 Each round, left rotate shift C & D of prev round separately by 1 or 2 depending on shifts[16]
-Apply PC2 and store in key array
+Apply PC2 and store in key_sequence
 */
+bool key_sequence[16][48];
 
-
+/*
+Generate the 48 bit round keys from 64 bit input_key and store them in key_sequence[16][48]
+*/
+void generate_keys(const bool input_key[64])
+{
+	bool temp[56];
+	//Apply permutation PC1 to generate 56 bit output from 64 bit input key
+	permute_bits(input_key, 64, temp, 56, PC1);
+	int i;
+	//generating round keys
+	for(i = 0; i < 16; i++)
+	{
+		//rotate each half by the no of bits given in the table: shifts
+		key_rotate(temp, shifts[i]);
+		//apply permutation PC2 to get 48 bit round key and store in key_sequence[i]
+		permute_bits(temp, 56, key_sequence[i], 48, PC2);
+	}
+}
 
 /*
 ROUND FUNCTION F(R, K)
-Apply EP on R to get 48 bits.
-XOR it with key K
-Use Sbox to get 32 bits
-Apply Permutatation PF to get 32 bits
 */
-
+void round_fn(const bool R[32], const bool K[48], bool output[32])
+{
+	bool temp1[48], temp2[48], temp3[32];
+	//Apply EP on R to get 48 bits.
+	permute_bits(R, 32, temp1, 48, EP);
+	//XOR it with key K
+	xor(temp1, K, temp2, 48);
+	//Apply S-BOX to get 32 bits
+	sbox_transform(temp2, temp3);
+	//Apply Permutatation PF
+	permute_bits(temp3, 32, output, 32, PF);
+}
 
 
 /*FEISTEL ROUND - A single round
 L_i = R_(i-1)
 R_I = L_(i-1) XOR F(R_(i-1), K_i)
 */
+void feistel_round(const bool input[64], bool output[64], const bool round_key[48])
+{
+	bool temp1[32];
+	//L_i = R_(i-1)
+	memcpy(output, &input[32], 32);
+	//R_i = L_(i-1) XOR F(R_i-1), K_i
+	round_fn(&input[32], round_key, temp1);
+	xor(input, temp1, &output[32], 32);
+}
 
 
 /*ENCRYPTION - Encrypt a single 64 bit block
 */
+void encrypt(const bool input[64], bool output[64])
+{
+	int i;
+	bool temp1[64], temp2[64];
+	permute_bits(input, 64, temp1, 64, IP);
+	for(i = 0; i < 16; i++)
+	{
+		feistel_round(temp1, temp2, key_sequence[i]);
+		memcpy(temp1, temp2, 64);
+	}
+	memcpy(temp2, &temp1[32], 32);
+	memcpy(&temp2[32], temp1, 32);
+	permute_bits(temp2, 64, output, 64, IPi);
+}
 
 
 /*DECRYPTION - Decrypt a single 64 bit block
 */
-
-
-/*MAIN - Read from file 64 bits into bool array
-Encypt & write to file
-*/
-
-int main(int argc, char const *argv[])
+void decrypt(const bool input[64], bool output[64])
 {
-	/* code */
+	int i;
+	bool temp1[64], temp2[64];
+	permute_bits(input, 64, temp1, 64, IP);
+	for(i = 15; i >= 0; i--)
+	{
+		feistel_round(temp1, temp2, key_sequence[i]);
+		memcpy(temp1, temp2, 64);
+	}
+	memcpy(temp2, &temp1[32], 32);
+	memcpy(&temp2[32], temp1, 32);
+	permute_bits(temp2, 64, output, 64, IPi);
+}
+
+/**Random utility functions follow */
+void dectobin(unsigned long int dec, bool bin[64]) 
+{
+	int i;
+	for(i = 0; i< 64; i++)
+	{
+		bin[i] = (dec>>(63-i)) & 1;
+	}
+}
+
+void printbin(const bool bitstring[], int n) 
+{
+	int i;
+	for (i = 0; i < n; i++)
+	{
+		printf(bitstring[i]? "1" : "0");
+		if((i+1)%8==0 && i!=0)
+			printf(" ");
+	}
+	printf("\n");
+}
+
+bool test_DES()
+{
+	/**
+	Test for des taken from http://people.csail.mit.edu/rivest/pubs/Riv85.txt by Rivest(1985)
+	Quote from the abstract:
+	"Use the recurrence relation:
+	X0      =       9474B8E8C73BCA7D (hexadecimal)
+	X(i+1)  =       IF  (i is even)  THEN  E(Xi,Xi)  ELSE  D(Xi,Xi)
+	to compute a sequence of 64-bit values:  X0, X1, X2, ..., X16.  Here
+	E(X,K)  denotes the DES encryption of  X  using key  K, and  D(X,K)  denotes
+	the DES decryption of  X  using key  K.  If you obtain
+		X16     =       1B1A2DDB4C642438
+	your implementation does not have any of the 36,568 possible single-fault 
+	errors described herein."
+	*/
+	bool X[17][64], Y[64];
+	dectobin(0x9474B8E8C73BCA7D, X[0]);
+	int i;
+	for(i = 0; i < 16; i++)
+	{
+		generate_keys(X[i]);
+		if(i%2 == 0)
+		{
+			encrypt(X[i], X[i+1]);
+		}
+		else
+		{
+			decrypt(X[i], X[i+1]);
+		}
+	}
+	dectobin(0x1B1A2DDB4C642438, Y);
+	printbin(X[16], 64);
+	printbin(Y, 64);
+	bool passed = true;
+	for(i = 0; i< 64; i++)
+	{
+		if(X[16][i]!=Y[i])
+			passed = false;
+	}
+	return passed;
+}
+
+
+int main()
+{
+	bool passed =test_DES();
+	printf("%d\n", passed);
 	return 0;
 }
