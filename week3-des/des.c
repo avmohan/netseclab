@@ -12,7 +12,7 @@ Author: Abhijith V Mohan
 
 void printbin(const bool[], int);
 bool intcipher1[16][64], intcipher2[16][64]; //intermediate values for avalanche 
-int r_no = 0;
+int r_no = 0; //round no for avalanche
 
 //TABLES
 //Initial Permutation
@@ -171,7 +171,7 @@ void permute_bits(const bool input[], int input_size, bool output[], int output_
 	}
 }
 
-/*sbox lookup
+/*Sbox lookup
 Map 6 bit input to 4 bit output according to the Sbox: Sbox_num
 */
 void sbox_lookup(const bool input[6], bool output[4], int Sbox_num)
@@ -199,7 +199,9 @@ void sbox_transform(const bool input[48], bool output[32])
 	}
 }
 
-/*v3 = v1 XOR v2*/
+/*
+v3 = v1 XOR v2. vsize is no of bits.
+*/
 void xor(const bool v1[], const bool v2[], bool v3[], int vsize) 
 {
 	int i;
@@ -209,6 +211,9 @@ void xor(const bool v1[], const bool v2[], bool v3[], int vsize)
 	}
 }
 
+/*
+left rotate v by n bits
+*/
 void left_rotate(bool v[], int vsize, int n) 
 {
 	//left rotate v by n bits
@@ -224,6 +229,9 @@ void left_rotate(bool v[], int vsize, int n)
 	}
 }
 
+/*
+Rotate the 56 bit key: each half independently.
+*/
 void key_rotate(bool v[], int n)
 {
 	//v is 56 bits, The left & right 28 bits are independently rotated by n bits
@@ -321,6 +329,7 @@ void encrypt(const bool input[64], bool output[64])
 */
 void decrypt(const bool input[64], bool output[64])
 {
+	r_no = 0;
 	int i;
 	bool temp1[64], temp2[64];
 	permute_bits(input, 64, temp1, 64, IP);
@@ -335,15 +344,36 @@ void decrypt(const bool input[64], bool output[64])
 }
 
 /**Random utility functions follow */
+/*
+Generate 64 bit bool array from an integer.
+*/
 void dectobin(unsigned long int dec, bool bin[64]) 
 {
 	int i;
-	for(i = 0; i< 64; i++)
+	for(i = 0; i < 64; i++)
 	{
-		bin[i] = (dec>>(63-i)) & 1;
+		bin[i] = (dec & (1ul<<(63-i)));
 	}
 }
 
+/*
+Generate integer from a 64 bit bool array
+*/
+unsigned long bintodec(const bool bin[64])
+{
+	unsigned long dec = 0;
+	int i;
+	for(i = 0; i < 64; i++)
+	{
+		dec = dec<<1;
+		dec = dec|(int)(bin[i]);
+	}
+	return dec;
+}
+
+/*
+Generate 64 bit bool array from bit-string str[100]
+*/
 void strtobin(const char str[100], bool bin[64])
 {
 	int c = 0, i;
@@ -358,7 +388,9 @@ void strtobin(const char str[100], bool bin[64])
 	}
 }
 
-
+/*
+Print out the n bit bool array, grouped by bytes.
+*/
 void printbin(const bool bitstring[], int n) 
 {
 	int i;
@@ -371,9 +403,7 @@ void printbin(const bool bitstring[], int n)
 	printf("\n");
 }
 
-bool test_DES()
-{
-	/**
+/**
 	Test for des taken from http://people.csail.mit.edu/rivest/pubs/Riv85.txt by Rivest(1985)
 	Quote from the abstract:
 	"Use the recurrence relation:
@@ -385,7 +415,9 @@ bool test_DES()
 		X16     =       1B1A2DDB4C642438
 	your implementation does not have any of the 36,568 possible single-fault 
 	errors described herein."
-	*/
+*/
+bool test_DES()
+{
 	bool X[17][64], Y[64];
 	dectobin(0x9474B8E8C73BCA7D, X[0]);
 	int i;
@@ -432,6 +464,9 @@ void random_bitfill(bool X[64])
 	dectobin(x, X);
 }
 
+/*
+Encrypting 2 near-identical plaintexts with same key.
+*/
 void avalanche_test1()
 {
 	printf("Test 1: Two plaintexts differ by 1 bit, encrypted with same key\n");
@@ -474,6 +509,9 @@ void avalanche_test1()
 	}
 }
 
+/*
+Encrypting same plaintext with near-identical keys
+*/
 void avalanche_test2()
 {
 	printf("Test 2: Same plaintext encrypted with two keys differing by 1 bit\n");
@@ -526,10 +564,7 @@ int main(int argc, char* argv[])
 	// bool passed =test_DES();
 	// printf(passed? "PASSED\n" : "FAILED\n");
 	if (argc<2)
-	{
-		printf("Usage: ./des [a|i]\n");
-		return 0;
-	}
+		goto usage;
 
 	int mode = argv[1][0];
 	if (mode == 'a')
@@ -542,7 +577,9 @@ int main(int argc, char* argv[])
 	{
 		char plain[100], key[100];
 		bool P[64], K[64], C[64];
+		printf("Plaintext (64bit bitstring)\n");
 		fgets(plain, 100, stdin);
+		printf("Key (64bit bitstring)\n");
 		fgets(key, 100, stdin);
 		strtobin(plain, P);
 		strtobin(key, K);
@@ -555,5 +592,43 @@ int main(int argc, char* argv[])
 		printf("C: ");
 		printbin(C, 64);
 	}
+	else if(mode == 'e' || mode == 'd')
+	{
+		if(argc<5)
+			goto usage;
+		char *infile, *outfile;
+		unsigned long keyint, buf; 
+		FILE *fin, *fout;
+		bool I[64], K[64], O[64];
+		keyint = strtoul(argv[2], NULL, 10);
+		dectobin(keyint, K);
+		generate_keys(K);
+		infile = argv[3];
+		outfile = argv[4];
+		fin = fopen(infile, "r");
+		fout = fopen(outfile, "w");
+		buf = 0;
+		int cnt = 0;
+		while((cnt = fread(&buf, 1, 8, fin))>0)
+		{
+			dectobin(buf, I);
+			if(mode == 'e')
+			{
+				encrypt(I, O);
+			}
+			else if(mode == 'd')
+			{
+				decrypt(I, O);
+			}
+			buf = bintodec(O);
+			fwrite(&buf, 8, 1, fout);
+			buf = 0;
+		}
+		fclose(fin);
+		fclose(fout);
+	}
 	return 0;
+	usage:
+		printf("Usage: ./des a|i|[e|d <key> <infile> <outfile>]]\n");
+		return 1;
 }
