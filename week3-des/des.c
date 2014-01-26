@@ -10,7 +10,9 @@ Author: Abhijith V Mohan
 #include <stdlib.h>
 #include <assert.h>
 
+// #define textbook //uncomment for textbook example of avalanche effect (from Stallings p81)
 void printbin(const bool[], int);
+bool avalanche_testing = false; //whether doing avalanche tests
 bool intcipher1[16][64], intcipher2[16][64]; //intermediate values for avalanche 
 int r_no = 0; //round no for avalanche
 
@@ -165,8 +167,7 @@ Generate the permutation of input[] in output[] according to table[]
 void permute_bits(const bool input[], int input_size, bool output[], int output_size, const int table[]) 
 {
 	int i;
-	for(i = 0; i < output_size; i++)
-	{
+	for(i = 0; i < output_size; i++) {
 		output[i] = input[table[i]];
 	}
 }
@@ -193,8 +194,7 @@ Apply all 8 S-boxes to transform 48 bits input to 32 bits output
 void sbox_transform(const bool input[48], bool output[32])
 {
 	int i;
-	for(i = 0; i < 8; i++)
-	{
+	for(i = 0; i < 8; i++) {
 		sbox_lookup(&input[6*i], &output[4*i], i);
 	}
 }
@@ -205,8 +205,7 @@ v3 = v1 XOR v2. vsize is no of bits.
 void xor(const bool v1[], const bool v2[], bool v3[], int vsize) 
 {
 	int i;
-	for(i = 0 ; i < vsize; i++)
-	{
+	for(i = 0 ; i < vsize; i++) {
 		v3[i] = v1[i] ^ v2[i];
 	}
 }
@@ -218,11 +217,9 @@ void left_rotate(bool v[], int vsize, int n)
 {
 	//left rotate v by n bits
 	int i, j;
-	for(j = 0; j < n; j++)
-	{
+	for(j = 0; j < n; j++) {
 		bool temp = v[0];
-		for(i = 0; i < vsize-1; i++)
-		{
+		for(i = 0; i < vsize-1; i++) {
 			v[i] = v[i+1];
 		}
 		v[vsize-1] = temp;
@@ -243,7 +240,7 @@ void key_rotate(bool v[], int n)
 
 /*
 KEY GENERATION
-64 bit key input to the algorithm. every 8th bit is ignored to make 56 bit
+64 bit key input to the algorithm. every 8th bit is ignored to make 56 bit (done by PC1)
 Apply permutation PC1.
 Treat 56 bits as 2 blocks of 28 bits C & D.
 Each round, left rotate shift C & D of prev round separately by 1 or 2 depending on shifts[16]
@@ -261,8 +258,7 @@ void generate_keys(const bool input_key[64])
 	permute_bits(input_key, 64, temp, 56, PC1);
 	int i;
 	//generating round keys
-	for(i = 0; i < 16; i++)
-	{
+	for(i = 0; i < 16; i++) {
 		//rotate each half by the no of bits given in the table: shifts
 		key_rotate(temp, shifts[i]);
 		//apply permutation PC2 to get 48 bit round key and store in key_sequence[i]
@@ -300,9 +296,11 @@ void feistel_round(const bool input[64], bool output[64], const bool round_key[4
 	round_fn(&input[32], round_key, temp1);
 	xor(input, temp1, &output[32], 32);
 	
-	//Below part only for avalanche test. not part of des
-	memcpy(intcipher2[r_no], output, 64);
-	r_no++;
+	//Below part only for avalanche testing; not part of des
+	if(avalanche_testing) {	
+		memcpy(intcipher2[r_no], output, 64);
+		r_no++;
+	}
 }
 
 
@@ -314,8 +312,7 @@ void encrypt(const bool input[64], bool output[64])
 	int i;
 	bool temp1[64], temp2[64];
 	permute_bits(input, 64, temp1, 64, IP);
-	for(i = 0; i < 16; i++)
-	{
+	for(i = 0; i < 16; i++) {
 		feistel_round(temp1, temp2, key_sequence[i]);
 		memcpy(temp1, temp2, 64);
 	}
@@ -333,8 +330,7 @@ void decrypt(const bool input[64], bool output[64])
 	int i;
 	bool temp1[64], temp2[64];
 	permute_bits(input, 64, temp1, 64, IP);
-	for(i = 15; i >= 0; i--)
-	{
+	for(i = 15; i >= 0; i--) {
 		feistel_round(temp1, temp2, key_sequence[i]);
 		memcpy(temp1, temp2, 64);
 	}
@@ -350,8 +346,7 @@ Generate 64 bit bool array from an integer.
 void dectobin(unsigned long int dec, bool bin[64]) 
 {
 	int i;
-	for(i = 0; i < 64; i++)
-	{
+	for(i = 0; i < 64; i++) {
 		bin[i] = (dec & (1ul<<(63-i)));
 	}
 }
@@ -363,8 +358,7 @@ unsigned long bintodec(const bool bin[64])
 {
 	unsigned long dec = 0;
 	int i;
-	for(i = 0; i < 64; i++)
-	{
+	for(i = 0; i < 64; i++) {
 		dec = dec<<1;
 		dec = dec|(int)(bin[i]);
 	}
@@ -376,12 +370,11 @@ Generate 64 bit bool array from bit-string str[100]
 */
 void strtobin(const char str[100], bool bin[64])
 {
+	memset(bin, 0, 64);
 	int c = 0, i;
-	for(i = 0; c < 64 && str[i]!='\0'; i++)
-	{
+	for(i = 0; c < 64 && str[i]!='\0' && str[i]!='\n'; i++) {
 		assert(str[i]=='1' || str[i]=='0' || str[i]==' ');
-		if(str[i]=='0' || str[i]=='1')
-		{
+		if(str[i]=='0' || str[i]=='1') {
 			bin[c] = (bool)(str[i] - '0');
 			c++;
 		}
@@ -394,8 +387,7 @@ Print out the n bit bool array, grouped by bytes.
 void printbin(const bool bitstring[], int n) 
 {
 	int i;
-	for (i = 0; i < n; i++)
-	{
+	for (i = 0; i < n; i++) {
 		printf(bitstring[i]? "1" : "0");
 		if((i+1)%8==0 && i!=0)
 			printf(" ");
@@ -421,15 +413,12 @@ bool test_DES()
 	bool X[17][64], Y[64];
 	dectobin(0x9474B8E8C73BCA7D, X[0]);
 	int i;
-	for(i = 0; i < 16; i++)
-	{
+	for(i = 0; i < 16; i++) {
 		generate_keys(X[i]);
-		if(i%2 == 0)
-		{
+		if(i%2 == 0) {
 			encrypt(X[i], X[i+1]);
 		}
-		else
-		{
+		else {
 			decrypt(X[i], X[i+1]);
 		}
 	}
@@ -437,8 +426,7 @@ bool test_DES()
 	// printbin(X[16], 64);
 	// printbin(Y, 64);
 	bool passed = true;
-	for(i = 0; i< 64; i++)
-	{
+	for(i = 0; i< 64; i++) {
 		if(X[16][i]!=Y[i])
 			passed = false;
 	}
@@ -449,8 +437,7 @@ bool test_DES()
 int ham_distance(const bool A[64], const bool B[64])
 {
 	int d=0, i;
-	for(i = 0; i < 64; i++)
-	{
+	for(i = 0; i < 64; i++) {
 		d+=(A[i]!=B[i]);
 	}
 	return d;
@@ -469,9 +456,11 @@ Encrypting 2 near-identical plaintexts with same key.
 */
 void avalanche_test1()
 {
+	avalanche_testing = true;
 	printf("Test 1: Two plaintexts differ by 1 bit, encrypted with same key\n");
 	bool P1[64], P2[64], K[64], C[64];
 	
+	#ifndef textbook
 	//random bits
 	random_bitfill(K);
 	random_bitfill(P1);
@@ -479,11 +468,14 @@ void avalanche_test1()
 	assert(ham_distance(P1, P2)==0);
 	int k = rand()%64;
 	P2[k] = !P2[k];
+	#endif
 	
-	//textbook example
-	// dectobin(0x029648c438303864, K);
-	// dectobin(0x0000000000000000, P1);
-	// dectobin(0x8000000000000000, P2);
+	#ifdef textbook
+	// textbook example
+	dectobin(0x029648c438303864, K);
+	dectobin(0x0000000000000000, P1);
+	dectobin(0x8000000000000000, P2);
+	#endif
 	
 	assert(ham_distance(P1, P2) == 1);
 	printf("P1: ");
@@ -496,17 +488,16 @@ void avalanche_test1()
 	generate_keys(K);
 	encrypt(P1, C);
 	int i;
-	for(i = 0; i < 16; i++)
-	{
+	for(i = 0; i < 16; i++) {
 		memcpy(intcipher1[i], intcipher2[i], 64);
 	}
 	encrypt(P2, C);
 	printf("Hamming distance after round %2d: %2d\n", 0, 1);
-	for(i = 0; i < 16; i++)
-	{
+	for(i = 0; i < 16; i++) {
 		int d = ham_distance(intcipher1[i], intcipher2[i]);
 		printf("Hamming distance after round %2d: %2d\n", i+1, d);	
 	}
+	avalanche_testing = false;
 }
 
 /*
@@ -514,24 +505,28 @@ Encrypting same plaintext with near-identical keys
 */
 void avalanche_test2()
 {
+	avalanche_testing = true;
 	printf("Test 2: Same plaintext encrypted with two keys differing by 1 bit\n");
 	bool P[64], K1[64], K2[64], C[64];
 	
+	#ifndef textbook
 	//random bits
 	random_bitfill(P);
 	random_bitfill(K1);
 	memcpy(K2, K1, 64);
 	int k;
-	do
-	{
+	do {
 		k = rand()%64;
 	}while((k+1)%8 ==0);
 	K2[k] = !K2[k];
+	#endif
 	
+	#ifdef textbook
 	//textbook example
-	// dectobin(0x68852f7a1376eba4, P);
-	// dectobin(0xe4f6de303a0862dcL, K1);
-	// dectobin(0x64f6de303a0862dc, K2);
+	dectobin(0x68852f7a1376eba4, P);
+	dectobin(0xe4f6de303a0862dcL, K1);
+	dectobin(0x64f6de303a0862dc, K2);
+	#endif
 	
 	assert(ham_distance(K1, K2) == 1);
 	printf("P : ");
@@ -544,56 +539,79 @@ void avalanche_test2()
 	generate_keys(K1);
 	encrypt(P, C);
 	int i;
-	for(i = 0; i < 16; i++)
-	{
+	for(i = 0; i < 16; i++) {
 		memcpy(intcipher1[i], intcipher2[i], 64);
 	}
 	generate_keys(K2);
 	encrypt(P, C);
 	printf("Hamming distance after round %2d: %2d\n", 0, 0);
-	for(i = 0; i < 16; i++)
-	{
+	for(i = 0; i < 16; i++) {
 		int d = ham_distance(intcipher1[i], intcipher2[i]);
 		printf("Hamming distance after round %2d: %2d\n", i+1, d);	
-	}	
+	}
+	avalanche_testing = false;
 }
 
 int main(int argc, char* argv[])
 {
 	srand(time(NULL));
-	// bool passed =test_DES();
-	// printf(passed? "PASSED\n" : "FAILED\n");
 	if (argc<2)
 		goto usage;
 
 	int mode = argv[1][0];
-	if (mode == 'a')
-	{
+	if(mode == 't') {
+		bool passed =test_DES();
+		printf(passed? "PASSED\n" : "FAILED\n");
+	}
+	if (mode == 'a') {
+		avalanche_testing = true;
+		printf("Avalanche tests\n");
 		avalanche_test1();
 		printf("------------------------\n");
 		avalanche_test2();	
 	}
-	else if (mode == 'i')
-	{
-		char plain[100], key[100];
+	else if (mode == 'i') {
+		char ch, input[100], key[100];
 		bool P[64], K[64], C[64];
-		printf("Plaintext (64bit bitstring)\n");
-		fgets(plain, 100, stdin);
-		printf("Key (64bit bitstring)\n");
-		fgets(key, 100, stdin);
-		strtobin(plain, P);
-		strtobin(key, K);
-		generate_keys(K);
-		encrypt(P, C);
-		printf("P: ");
-		printbin(P, 64);
-		printf("K: ");
-		printbin(K, 64);
-		printf("C: ");
-		printbin(C, 64);
+		do {
+			printf("encrypt or decrypt?(e/d)");
+			scanf("%c", &ch);
+		}while(!(ch == 'e' || ch == 'd'));
+		getc(stdin); //remove '\n'
+		if(ch=='e') {	
+			printf("Plaintext (64bit bitstring)\n");
+			fgets(input, 100, stdin);
+			printf("Key (64bit bitstring)\n");
+			fgets(key, 100, stdin);
+			strtobin(input, P);
+			strtobin(key, K);
+			generate_keys(K);
+			encrypt(P, C);
+			printf("P: ");
+			printbin(P, 64);
+			printf("K: ");
+			printbin(K, 64);
+			printf("C: ");
+			printbin(C, 64);
+		}
+		else {
+			printf("Ciphertext (64bit bitstring)\n");
+			fgets(input, 100, stdin);
+			printf("Key (64bit bitstring)\n");
+			fgets(key, 100, stdin);
+			strtobin(input, C);
+			strtobin(key, K);
+			generate_keys(K);
+			decrypt(C, P);
+			printf("C: ");
+			printbin(C, 64);
+			printf("K: ");
+			printbin(K, 64);
+			printf("P: ");
+			printbin(P, 64);
+		}
 	}
-	else if(mode == 'e' || mode == 'd')
-	{
+	else if(mode == 'e' || mode == 'd') {
 		if(argc<5)
 			goto usage;
 		char *infile, *outfile;
@@ -609,15 +627,12 @@ int main(int argc, char* argv[])
 		fout = fopen(outfile, "w");
 		buf = 0;
 		int cnt = 0;
-		while((cnt = fread(&buf, 1, 8, fin))>0)
-		{
+		while((cnt = fread(&buf, 1, 8, fin))>0) {
 			dectobin(buf, I);
-			if(mode == 'e')
-			{
+			if(mode == 'e') {
 				encrypt(I, O);
 			}
-			else if(mode == 'd')
-			{
+			else if(mode == 'd') {
 				decrypt(I, O);
 			}
 			buf = bintodec(O);
@@ -629,6 +644,6 @@ int main(int argc, char* argv[])
 	}
 	return 0;
 	usage:
-		printf("Usage: ./des a|i|[e|d <key> <infile> <outfile>]]\n");
+		printf("Usage: ./des t|a|i|[e|d <key> <infile> <outfile>]]\n");
 		return 1;
 }
