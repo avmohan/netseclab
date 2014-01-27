@@ -389,7 +389,7 @@ void printbin(const bool bitstring[], int n)
 	int i;
 	for (i = 0; i < n; i++) {
 		printf(bitstring[i]? "1" : "0");
-		if((i+1)%8==0 && i!=0)
+		if((i+1)%8==0)
 			printf(" ");
 	}
 	printf("\n");
@@ -492,10 +492,11 @@ void avalanche_test1()
 		memcpy(intcipher1[i], intcipher2[i], 64);
 	}
 	encrypt(P2, C);
-	printf("Hamming distance after round %2d: %2d\n", 0, 1);
+	printf("Hamming distance with plaintext after each round\n");
+	printf("round %2d: %2d\n", 0, 1);
 	for(i = 0; i < 16; i++) {
 		int d = ham_distance(intcipher1[i], intcipher2[i]);
-		printf("Hamming distance after round %2d: %2d\n", i+1, d);	
+		printf("round %2d: %2d\n", i+1, d);	
 	}
 	avalanche_testing = false;
 }
@@ -515,6 +516,7 @@ void avalanche_test2()
 	random_bitfill(K1);
 	memcpy(K2, K1, 64);
 	int k;
+	//choose a random bit to flip (don't choose the ignored 8th bits)
 	do {
 		k = rand()%64;
 	}while((k+1)%8 ==0);
@@ -544,10 +546,11 @@ void avalanche_test2()
 	}
 	generate_keys(K2);
 	encrypt(P, C);
-	printf("Hamming distance after round %2d: %2d\n", 0, 0);
+	printf("Hamming distance with plaintext after each round\n");
+	printf("round %2d: %2d\n", 0, 0);
 	for(i = 0; i < 16; i++) {
 		int d = ham_distance(intcipher1[i], intcipher2[i]);
-		printf("Hamming distance after round %2d: %2d\n", i+1, d);	
+		printf("round %2d: %2d\n", i+1, d);	
 	}
 	avalanche_testing = false;
 }
