@@ -1,6 +1,12 @@
 /*
 Feistel cipher
 by Abhijith V Mohan
+
+Implementation of a simple cipher with feistel structure
+and using it to encrypt a file in EBC mode
+TODO: 
+add single block encryption in main
+add CBC mode
 */
 #include <assert.h>
 #include <stdio.h>
@@ -9,49 +15,53 @@ by Abhijith V Mohan
 //Key size 16 bits
 
 #define NO_OF_ROUNDS 16
-typedef unsigned int uint;
-uint key_sequence[NO_OF_ROUNDS];
+typedef unsigned int uint; //32 bits
+uint key_sequence[NO_OF_ROUNDS]; //subkey sequence
 
+//left rotate(only the rightmost 16 bits)
 inline uint left_rotate(uint x)
 {
-	return x<<1 | x>>31;
+	return (x<<1)&0x0000FFFF | (1<<15)&x;
 }
 
+//Left 16 bits of X
 inline uint left(uint X) 
 {
-	//Left 16 bits of X
 	return (0xFFFF0000&X)>>16;
 }
 
+//Right 16 bits of X
 inline uint right(uint X) 
 {
-	//Right 16 bits of X
 	return 0x0000FFFF&X;
 }
 
+//Make 32bits with 16 bit L and 16 bit R
 inline uint pack(uint L, uint R) 
 {
-	//Make 32bits with 16 bit L and 16 bit R
 	return (L<<16)|R;
 }
 
+//Generates round keys from the base key
 void keygen(uint K) 
 {
-	//Generates round keys from the base key
+	K &= 0x0000FFFF;
 	uint i;
-	for (i = 0; i < NO_OF_ROUNDS; i++) {
-		key_sequence[i]=right(left_rotate(K));
+	key_sequence[0] = K;
+	for (i = 1; i < NO_OF_ROUNDS; i++) {
+		key_sequence[i]=left_rotate(key_sequence[i-1]);
 	}
 }
 
+//The feistel round function
 uint round_fn(uint x, uint k)
 {
 	return right(x^k);
 }
 
+//One round of the feistel function
 uint feistel_round(uint X, uint round_key)
 {
-	//One round of the feistel function
 	return pack(right(X), left(X)^round_fn(right(X), round_key));
 }
 
