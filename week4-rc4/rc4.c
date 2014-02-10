@@ -3,27 +3,27 @@ RC4 stream cipher
 Author: Abhijith V Mohan
 */
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <assert.h>
 
 typedef unsigned char byte;
+
+/*Structure to store the state of the PRNG*/
 typedef struct
 {
 	byte i, j;
 	byte S[256];
 } Rc4State;
 
-void static swap(byte *a, byte *b)
+void swap(byte *a, byte *b)
 {
 	byte temp = *a;
 	*a = *b;
 	*b = temp;
 }
 
-void static die(const char *message)
+void die(const char *message)
 {
 	if(errno) {
 		perror(message);
@@ -39,7 +39,7 @@ also initialize i&j counters in state for stream generation*/
 void rc4InitState( Rc4State *state, const byte K[256], size_t keylen)
 {
 	byte T[256];
-	if(!(keylen>=1 && keylen<=256)) die("Invalid keylen");//TODO change this
+	if(!(keylen>=1 && keylen<=256)) die("Invalid keylen\n");
 	int i;
 	for(i = 0; i < 256; i++) {
 		state-> S[i] = i;
@@ -59,7 +59,7 @@ void rc4InitState( Rc4State *state, const byte K[256], size_t keylen)
 }
 
 /*Encrypt/Decrypt text by XORing with next byte of keystream*/
-byte static rc4CryptByte(Rc4State *state, byte text)
+byte rc4CryptByte(Rc4State *state, byte text)
 {
 	byte t, k;
 	byte *i = &(state->i), *j = &(state->j);
@@ -73,6 +73,7 @@ byte static rc4CryptByte(Rc4State *state, byte text)
 	return text ^ k;
 }
 
+/*Encrypt/decrypt text[] of len bytes in place*/
 void rc4Crypt(Rc4State *state, byte text[], size_t len)
 {
 	size_t i;
@@ -81,14 +82,15 @@ void rc4Crypt(Rc4State *state, byte text[], size_t len)
 	}
 }
 
+/*Print usage note*/
 void usage()
 {
-	printf("Invalid Usage\n");
+	printf("Usage: ./rc4 <keystring> <inputfile> <outputfile>\n");
 	exit(1);
 }
 
 /*
-./rc4 <keystring> <inputfile> <outputfile>
+Usage: ./rc4 <keystring> <inputfile> <outputfile>
 */
 int main(int argc, char const *argv[])
 {
@@ -99,10 +101,10 @@ int main(int argc, char const *argv[])
 	rc4InitState(&rc4_state, (const byte*)argv[1], keylen);
 	FILE *fin = fopen(argv[2], "r");
 	if(!fin)
-		die("File can't be opened for reading");
+		die("File %s can't be opened for reading\n", argv[2]);
 	FILE *fout = fopen(argv[3], "w");
 	if(!fout)
-		die("File can't be opened for writing");
+		die("File %s can't be opened for writing\n", argv[3]);
 	byte buf[100];
 	int ctr;
 	while((ctr = fread(&buf, 1, 100, fin))>0) {
