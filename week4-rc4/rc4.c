@@ -101,10 +101,10 @@ int main(int argc, char const *argv[])
 	rc4InitState(&rc4_state, (const byte*)argv[1], keylen);
 	FILE *fin = fopen(argv[2], "r");
 	if(!fin)
-		die("File %s can't be opened for reading\n", argv[2]);
+		die("File can't be opened for reading\n");
 	FILE *fout = fopen(argv[3], "w");
 	if(!fout)
-		die("File %s can't be opened for writing\n", argv[3]);
+		die("File can't be opened for writing\n");
 	byte buf[100];
 	int ctr;
 	while((ctr = fread(&buf, 1, 100, fin))>0) {
