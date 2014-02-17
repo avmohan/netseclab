@@ -3,18 +3,18 @@
  b)Vigenere cipher
  c)Hill cipher
  d)Playfair cipher
- 
+
 2)Implement Fiestel structure cipher								20.01.14 done
 
 3)Implement DES & show avalanche & bit independence effect			27.01.14 done
 
-4)Implement RC4														03.01.14
+4)Implement RC4														10.02.14 done
 
-5)Implement															10.02.14
- a)LCG PRNG
- b)BBS PRNG
- c)ANSI X9.117 PRNG
- 
-6)Implement RSA														17.02.14
+5)Implement
+ a)LCG PRNG															17.02.14 done
+ b)BBS PRNG															17.02.14 done
+ c)ANSI X9.117 PRNG													24.02.14
 
-7)Implement AES														24.02.14
+6)Implement RSA														03.03.14
+
+7)Implement AES														10.03.14
