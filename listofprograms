@@ -13,8 +13,8 @@
 5)Implement
  a)LCG PRNG															17.02.14 done
  b)BBS PRNG															17.02.14 done
- c)ANSI X9.117 PRNG													24.02.14
+ c)ANSI X9.117 PRNG													03.03.14 done
 
-6)Implement RSA														03.03.14
+6)Implement RSA														10.03.14
 
-7)Implement AES														10.03.14
+7)Implement AES														24.03.14

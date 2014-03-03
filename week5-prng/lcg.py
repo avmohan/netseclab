@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+"""Author: Abhijith V Mohan"""
 import sys
 from itertools import islice
 
@@ -17,7 +18,6 @@ def main():
 		print '\n'.join([str(i) for i in islice(lcg(x0, m, a, c), limit)])
 
 	else:
-		print 'Incorrect usage'
-
+		print 'Incorrect usage. Correct(seed, limit)'
 if __name__ == '__main__':
 	main()
